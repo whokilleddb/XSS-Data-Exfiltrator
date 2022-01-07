@@ -1,0 +1,6 @@
+# Target Binaries
+/target
+
+# Test Files
+index.html
+Capture.log
