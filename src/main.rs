@@ -7,8 +7,8 @@ use clap::{Arg, App};
 
 
 mod capture;
-mod convert;
-mod process_payload;
+//mod convert;
+//mod process_payload;
 
 fn main(){
     // Handle CTRL-C 

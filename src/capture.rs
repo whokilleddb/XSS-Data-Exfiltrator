@@ -3,13 +3,13 @@ use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use tokio::fs::File;
 use tokio_util::codec::{BytesCodec, FramedRead};
 use termion::color;
-
-use crate::convert;
-use crate::process_payload;
+use url::form_urlencoded;
+use std::collections::HashMap;
+//use crate::convert;
 
 /// This is our service handler. It receives a Request, routes on its
 /// path, and returns a Future of a Response.
-pub async fn exfil(req: Request<Body>, logfile: String, verbosity: bool ) -> Result<Response<Body>, hyper::Error> {
+pub async fn exfil(req: Request<Body>, _logfile: String, _verbosity: bool ) -> Result<Response<Body>, hyper::Error> {
     match (req.method(), req.uri().path()) {
         // Serve some instructions at /
         (&Method::GET, "/") | (&Method::GET, "/index.html") =>{
@@ -31,13 +31,53 @@ pub async fn exfil(req: Request<Body>, logfile: String, verbosity: bool ) -> Res
 
         // Exfil HTML Data
         (&Method::GET, "/exfil") => {
-            let whole_body = hyper::body::to_bytes(req.into_body()).await?;
-            let payload = convert::bytes_to_string(&whole_body);
-            process_payload::decode_payload("HTML", payload, logfile, verbosity);
+            let query = if let Some(q) = req.uri().query() {
+                q
+            } else {
+                return Ok(Response::new(Body::from("Ok")));
+            };
+            let params = form_urlencoded::parse(query.as_bytes())
+                .into_owned()
+                .collect::<HashMap<String, String>>();
+            let _chunk = if let Some(p) = params.get("chunk") {
+                p
+            } else {
+                return Ok(Response::new(Body::from("Not Ok")));
+            };
+            let num = if let Some(p) = params.get("num") {
+                p
+            } else {
+                return Ok(Response::new(Body::from("Not Ok")));
+            };
+            
+            let num: u32 = num.as_str().trim().parse().unwrap();
+            
+            println!("[+] Received {} chunks",num+1);
             Ok(Response::new(Body::from("Ok")))
         },
 
-       
+        (&Method::GET, "/exfil/init") => {
+            let query = if let Some(q) = req.uri().query() {
+                q
+            } else {
+                return Ok(Response::new(Body::from("Ok")));
+            };
+            let params = form_urlencoded::parse(query.as_bytes())
+                .into_owned()
+                .collect::<HashMap<String, String>>();
+            
+            let number_of_chunks = if let Some(p) = params.get("noc") {
+                p
+            } else {
+                return Ok(Response::new(Body::from("Not Ok")));
+            };
+
+            let number_of_chunks: u32 = number_of_chunks.as_str().trim().parse().unwrap();
+            println!("[+] Fetching {} chunks",number_of_chunks+1);
+            Ok(Response::new(Body::from("Ok")))
+        },
+
+
         // Return the 404 Not Found for other routes.
         _ => {
             let mut not_found = Response::default();
