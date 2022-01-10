@@ -39,7 +39,7 @@ pub async fn exfil(req: Request<Body>, _logfile: String, _verbosity: bool ) -> R
             let params = form_urlencoded::parse(query.as_bytes())
                 .into_owned()
                 .collect::<HashMap<String, String>>();
-            let _chunk = if let Some(p) = params.get("chunk") {
+            let chunk = if let Some(p) = params.get("chunk") {
                 p
             } else {
                 return Ok(Response::new(Body::from("Not Ok")));
@@ -52,7 +52,7 @@ pub async fn exfil(req: Request<Body>, _logfile: String, _verbosity: bool ) -> R
             
             let num: u32 = num.as_str().trim().parse().unwrap();
             
-            println!("[+] Received {} chunks",num+1);
+            println!("[+] Received {} chunks as : {}",num+1, chunk);
             Ok(Response::new(Body::from("Ok")))
         },
 
@@ -73,7 +73,7 @@ pub async fn exfil(req: Request<Body>, _logfile: String, _verbosity: bool ) -> R
             };
 
             let number_of_chunks: u32 = number_of_chunks.as_str().trim().parse().unwrap();
-            println!("[+] Fetching {} chunks",number_of_chunks+1);
+            println!("{}[+] Fetching Data In A Total Of {} chunks{}",color::Fg(color::LightGreen), number_of_chunks+1,color::Fg(color::Reset));
             Ok(Response::new(Body::from("Ok")))
         },
 

