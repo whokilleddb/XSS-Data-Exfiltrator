@@ -5,8 +5,6 @@ extern crate base64;
 use termion::color;
 use std::process;
 use std::str;
-use bytes::Bytes; 
-
 
 pub fn exit_on_error(msg: &str) -> !{ 
     eprintln!("{}[-] Error: {}{}", color::Fg(color::Red), msg,  color::Fg(color::Reset));
@@ -21,13 +19,6 @@ pub fn vec_u8_to_str<'a>(vec:&'a  Vec<u8>) -> &'a str {
     return decoded;   
 }
 
-pub fn bytes_to_string<'a>(b: &'a Bytes) -> &'a str{
-    let decoded_str: &str = match str::from_utf8(b){
-        Ok(num) => num,
-        Err(_) => exit_on_error("Could Not Decode UTF-8 bytes"),
-    };
-    return decoded_str;
-}
 
 pub fn decoder<'a>(enc: &'a str) -> String{
     // Decode &str to Vec<u8>

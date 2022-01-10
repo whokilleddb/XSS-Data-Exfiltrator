@@ -1,27 +1,34 @@
 use crate::convert;
 use std::io::Write;
 use std::fs;
+use termion::color;
+use std::process;
 
 // Function To Print Cookie
-pub fn decode_payload(key: &str, value: &str, logfile: String, verbose: bool){
-    if verbose {
-        let payload = format!("[+] Encoded {}: \n{}", key, value);
-        println!("{}",payload);
-        write_to_file(logfile.as_str(), payload.as_str());
-    };
+pub fn decode_payload(value: &str, logfile: String){
+    println!("{}-----------------{}", color::Fg(color::Red),color::Fg(color::Reset));
+    let mut encoded_filename: String = logfile.clone();
+    encoded_filename.insert_str(0, "Encoded-"); 
+    write_to_file(encoded_filename, value);
+    println!("{}[+] Encoded Payload Successfully Written To: Encoded-{}{}", color::Fg(color::Yellow),logfile,color::Fg(color::Reset));
     
     let decoded = convert::decoder(value);
-    let payload = format!("\n[+] Decoded {}: \n{}", key, decoded);
-    println!("[+] Decoded {}: \n{}",key, decoded);
-    write_to_file(logfile.as_str(), payload.as_str());
+    println!("[+] Decoded Payload: \n{}", decoded);
+    let mut decoded_filename: String = logfile.clone();
+    decoded_filename.insert_str(0, "Decoded-"); 
+    write_to_file(decoded_filename, decoded.as_str());
+    println!("{}[+] Encoded Payload Successfully Written To: Decoded-{}{}", color::Fg(color::Cyan),logfile,color::Fg(color::Reset));
+    println!("{}[+] Exiting {}🏳️", color::Fg(color::Magenta),color::Fg(color::Reset));
+    process::exit(0);    
 }
 
-fn write_to_file(filename: &str, payload: &str){
+fn write_to_file(filename: String, payload: &str){
+    println!("{}[+] Writing Data To: {}{}", color::Fg(color::Yellow), filename, color::Fg(color::Reset) );
     let mut file = fs::OpenOptions::new()
       .write(true)
-      .append(true)
       .create(true)
-      .open(filename)
+      .truncate(true)
+      .open(filename.as_str())
       .unwrap(); 
       //{
        // Ok(ptr) => ptr,

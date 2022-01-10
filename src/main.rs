@@ -7,8 +7,8 @@ use clap::{Arg, App};
 
 
 mod capture;
-//mod convert;
-//mod process_payload;
+mod convert;
+mod process_payload;
 
 fn main(){
     // Handle CTRL-C 
@@ -33,10 +33,6 @@ fn main(){
                                 .long("output")
                                 .help("Name of capture file")
                                 .takes_value(true))
-                            .arg(Arg::new("verbose")
-                                .short('v')
-                                .long("verbose")
-                                .help("Sets the level of verbosity"))
                             .get_matches();
     
     // Set Filename
@@ -51,13 +47,8 @@ fn main(){
 
     // Print Message
     println!("{}[+] XSS Exfiltration By @whokilleddb{}", color::Fg(color::Green), color::Fg(color::Reset));
-    let verbosity =  if matches.is_present("verbose"){
-        true
-    } else {
-        false 
-    };
 
-    match capture::start_listener(port, capture_file, verbosity){
+    match capture::start_listener(port, capture_file){
         Err(e) => println!("{}[-] Error Occured As: {:?}{}",color::Fg(color::Red), e, color::Fg(color::Reset)),
         _ => ()
     };  
