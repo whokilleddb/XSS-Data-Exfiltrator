@@ -5,11 +5,18 @@ use tokio_util::codec::{BytesCodec, FramedRead};
 use termion::color;
 use url::form_urlencoded;
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+
 //use crate::convert;
+
+struct Counter{
+    payload: String,
+    count: u32,
+}
 
 /// This is our service handler. It receives a Request, routes on its
 /// path, and returns a Future of a Response.
-pub async fn exfil(req: Request<Body>, _logfile: String, _verbosity: bool ) -> Result<Response<Body>, hyper::Error> {
+pub async fn exfil(req: Request<Body>, _logfile: String, _verbosity: bool, mutex: Arc<Mutex<Counter>> ) -> Result<Response<Body>, hyper::Error> {
     match (req.method(), req.uri().path()) {
         // Serve some instructions at /
         (&Method::GET, "/") | (&Method::GET, "/index.html") =>{
@@ -73,6 +80,10 @@ pub async fn exfil(req: Request<Body>, _logfile: String, _verbosity: bool ) -> R
             };
 
             let number_of_chunks: u32 = number_of_chunks.as_str().trim().parse().unwrap();
+            {
+                let mut x = mutex.lock().unwrap();
+                x.count = number_of_chunks ;
+            }
             println!("{}[+] Fetching Data In A Total Of {} chunks{}",color::Fg(color::LightGreen), number_of_chunks+1,color::Fg(color::Reset));
             Ok(Response::new(Body::from("Ok")))
         },
@@ -95,12 +106,20 @@ pub async fn start_listener(port: u16, logfile: String, verbosity: bool) -> Resu
     
     let addr = ([0, 0, 0, 0], port).into();
 
+    let payload = "".to_string();
+    let count: u32 = 0;
+//    let mut get_counter = Counter{ payload, count };
+
+    let mut primary_mutex :  Arc<Mutex<Counter>> = Arc::new(Mutex::new(Counter{ payload, count }));
+
+
     //let service = make_service_fn(|_| async { Ok::<_, hyper::Error>(service_fn(exfil)) });
     let service = make_service_fn(move |_| {
         let logfile = logfile.clone();
+        let mut primary_mutex = primary_mutex.clone();
         async move {
             Ok::<_, hyper::Error>(service_fn(move |req| {
-                exfil(req, logfile.clone(), verbosity)
+                exfil(req, logfile.clone(), verbosity, primary_mutex )
             }))
         }
     });
