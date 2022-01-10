@@ -3,4 +3,9 @@
 
 # Test Files
 index.html
-Capture.log
+*.log
+
+# Test Files
+Dockerfile
+
+
