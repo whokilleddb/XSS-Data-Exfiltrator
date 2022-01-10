@@ -1,0 +1,21 @@
+[package]
+name = "exfil"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+termion = "1.5.6"
+hex = "0.4.3"
+exitfailure = "0.5.1"
+base64 = "0.13.0"
+hyper = { version = "0.14", features = ["full"] }
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
+bytes = "1.1.0"
+lazy_static = "1.4.0"
+ctrlc = "3.2.1"
+clap = "3.0.5"
+tokio-util = "0.6.3"
+url = "2.2.2" 

