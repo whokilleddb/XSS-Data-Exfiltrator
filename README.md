@@ -9,10 +9,6 @@ $ git clone https://github.com/whokilleddb/XSS-Data-Exfiltrator
 $ cd XSS-Data-Exfiltrator
 $ cargo build --release
 ```
-### Using Dockerfile
-```bash
-$ sudo DOCKER_BUILDKIT=1 docker build --target export --output type=local,dest=. -t exfil:0.1.0 .
-```
 
 ## Usage
 ### Get Help
